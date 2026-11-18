@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar Widget</title>
+  <style>
+    :root {
+      --header-bg: #d9cfcf;
+      --header-text: #6b6464;
+      --body-bg: #ffffff;
+      --day-text: #5a5555;
+      --muted: #c4bcbc;
+      --weekday: #9a9292;
+      --today-bg: #d9cfcf;
+      --today-text: #3d3838;
+      --border: #ece7e7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                   "Malgun Gothic", "Segoe UI", sans-serif;
+    }
+
+    .calendar {
+      width: 100%;
+      max-width: 260px;
+      margin: 0 auto;
+      background: var(--body-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--header-bg);
+      padding: 6px 8px;
+      color: var(--header-text);
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      color: var(--header-text);
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+    .nav-btn:hover { background: rgba(255, 255, 255, 0.45); }
+
+    .month-label {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 6px 8px 8px;
+      row-gap: 2px;
+      text-align: center;
+    }
+
+    .weekday {
+      font-size: 10px;
+      color: var(--weekday);
+      padding: 4px 0;
+      font-weight: 500;
+    }
+
+    .day {
+      font-size: 11px;
+      color: var(--day-text);
+      height: 24px;
+      line-height: 24px;
+      border-radius: 50%;
+      margin: 1px auto;
+      width: 24px;
+    }
+
+    .day.empty { visibility: hidden; }
+    .day.other-month { color: var(--muted); }
+    .day.today {
+      background: var(--today-bg);
+      color: var(--today-text);
+      font-weight: 700;
+    }
+    .day.sunday { color: #b97a7a; }
+    .day.today.sunday { color: var(--today-text); }
+
+    .footer-link {
+      display: block;
+      text-align: center;
+      font-size: 10px;
+      color: var(--weekday);
+      text-decoration: none;
+      padding: 0 0 6px;
+    }
+    .footer-link:hover { color: var(--header-text); }
+  </style>
+</head>
+<body>
+  <div class="calendar" id="calendar">
+    <div class="header">
+      <button class="nav-btn" id="prev" aria-label="이전 달">&#8249;</button>
+      <div class="month-label" id="month"></div>
+      <button class="nav-btn" id="next" aria-label="다음 달">&#8250;</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    (function () {
+      const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
+
+      const monthEl = document.getElementById("month");
+      const gridEl  = document.getElementById("grid");
+      const prevBtn = document.getElementById("prev");
+      const nextBtn = document.getElementById("next");
+
+      // 기본값: 오늘이 속한 달 (한국 시간 기준)
+      const now = new Date();
+      let viewYear  = now.getFullYear();
+      let viewMonth = now.getMonth(); // 0 ~ 11
+
+      function render() {
+        // 헤더: 월 숫자만 표시 (예: 11월 -> "11")
+        monthEl.textContent = String(viewMonth + 1);
+
+        gridEl.innerHTML = "";
+
+        WEEKDAYS.forEach(function (w, i) {
+          const el = document.createElement("div");
+          el.className = "weekday" + (i === 0 ? " sunday" : "");
+          el.textContent = w;
+          gridEl.appendChild(el);
+        });
+
+        const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
+        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+        const prevDays    = new Date(viewYear, viewMonth, 0).getDate();
+
+        const today = new Date();
+        const isThisMonth = today.getFullYear() === viewYear && today.getMonth() === viewMonth;
+
+        const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+        for (let i = 0; i < totalCells; i++) {
+          const el = document.createElement("div");
+          el.className = "day";
+          const col = i % 7;
+          if (col === 0) el.classList.add("sunday");
+
+          if (i < firstDay) {
+            // 이전 달 날짜
+            el.textContent = prevDays - firstDay + i + 1;
+            el.classList.add("other-month");
+          } else if (i >= firstDay + daysInMonth) {
+            // 다음 달 날짜 (칸 맞추기용으로 숨김 처리)
+            el.textContent = i - (firstDay + daysInMonth) + 1;
+            el.classList.add("other-month");
+          } else {
+            const d = i - firstDay + 1;
+            el.textContent = d;
+            if (isThisMonth && d === today.getDate()) {
+              el.classList.add("today");
+            }
+          }
+          gridEl.appendChild(el);
+        }
+      }
+
+      prevBtn.addEventListener("click", function () {
+        viewMonth--;
+        if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+        render();
+      });
+
+      nextBtn.addEventListener("click", function () {
+        viewMonth++;
+        if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
