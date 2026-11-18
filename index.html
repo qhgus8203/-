@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calendar Widget</title>
   <style>
-    :root {
-  --header-bg: #d8c8cc;      /* 헤더 배경: 참고 달력의 더스티 로즈 그레이 */
-  --header-text: #6f5f65;    /* 헤더 글자 */
-  --body-bg: #f6f0f3;        /* 달력 본문 배경: 연한 핑크 톤 */
-  --day-text: #5e5257;       /* 날짜 글자 */
-  --muted: #c9bec3;          /* 이전/다음 달 날짜 */
-  --weekday: #a8979c;        /* 요일 글자 */
-  --today-bg: #d8c8cc;       /* 오늘 날짜 강조 */
+   :root {
+  --header-bg: #efe4ea;      /* 헤더 배경: 참고 이미지의 연한 핑크-라일락 */
+  --header-text: #6b5a62;    /* 헤더 글자 */
+  --body-bg: #ffffff;        /* 본문 배경: 흰색 */
+  --day-text: #5a5055;       /* 날짜 글자 */
+  --muted: #c4bbc0;          /* 이전/다음 달 날짜 */
+  --weekday: #9c8f95;        /* 요일 글자 */
+  --today-bg: #efe4ea;       /* 오늘 날짜 강조 배경 */
   --today-text: #3d3438;     /* 오늘 날짜 글자 */
-  --border: #ebe2e6;         /* 테두리 */
+  --sunday: #b07a88;         /* 일요일 글자 */
+  --border: #f0eaed;         /* 테두리 */
 }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
@@ -83,31 +85,19 @@
       font-size: 11px;
       color: var(--day-text);
       height: 24px;
+      width: 24px;
       line-height: 24px;
       border-radius: 50%;
       margin: 1px auto;
-      width: 24px;
     }
 
-    .day.empty { visibility: hidden; }
+    .day.sunday { color: var(--sunday); }
     .day.other-month { color: var(--muted); }
     .day.today {
       background: var(--today-bg);
       color: var(--today-text);
       font-weight: 700;
     }
-    .day.sunday { color: #b97a7a; }
-    .day.today.sunday { color: var(--today-text); }
-
-    .footer-link {
-      display: block;
-      text-align: center;
-      font-size: 10px;
-      color: var(--weekday);
-      text-decoration: none;
-      padding: 0 0 6px;
-    }
-    .footer-link:hover { color: var(--header-text); }
   </style>
 </head>
 <body>
@@ -129,7 +119,7 @@
       const prevBtn = document.getElementById("prev");
       const nextBtn = document.getElementById("next");
 
-      // 기본값: 오늘이 속한 달 (한국 시간 기준)
+      // 기본값: 오늘이 속한 달
       const now = new Date();
       let viewYear  = now.getFullYear();
       let viewMonth = now.getMonth(); // 0 ~ 11
@@ -137,7 +127,6 @@
       function render() {
         // 헤더: 월 숫자만 표시 (예: 11월 -> "11")
         monthEl.textContent = String(viewMonth + 1);
-
         gridEl.innerHTML = "";
 
         WEEKDAYS.forEach(function (w, i) {
@@ -159,15 +148,14 @@
         for (let i = 0; i < totalCells; i++) {
           const el = document.createElement("div");
           el.className = "day";
-          const col = i % 7;
-          if (col === 0) el.classList.add("sunday");
+          if (i % 7 === 0) el.classList.add("sunday");
 
           if (i < firstDay) {
             // 이전 달 날짜
             el.textContent = prevDays - firstDay + i + 1;
             el.classList.add("other-month");
           } else if (i >= firstDay + daysInMonth) {
-            // 다음 달 날짜 (칸 맞추기용으로 숨김 처리)
+            // 다음 달 날짜
             el.textContent = i - (firstDay + daysInMonth) + 1;
             el.classList.add("other-month");
           } else {
